@@ -21,6 +21,8 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IWalletRepository, EfWalletRepository>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ITransactionRepository, EfTransactionRepository>();
 
 
 var app = builder.Build();
