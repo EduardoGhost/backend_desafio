@@ -18,6 +18,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
+builder.Services.AddScoped<IWalletRepository, EfWalletRepository>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+
+
 
 var app = builder.Build();
 

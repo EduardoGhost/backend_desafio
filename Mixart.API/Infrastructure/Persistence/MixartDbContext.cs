@@ -11,4 +11,5 @@ public class MixartDbContext : DbContext
     }
 
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<Wallet> Wallets => Set<Wallet>();
 }
