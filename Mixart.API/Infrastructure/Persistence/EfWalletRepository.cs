@@ -25,5 +25,15 @@ namespace Mixart.API.Infrastructure.Persistence
             _db.Wallets.Update(wallet);
             await _db.SaveChangesAsync();
         }
+
+        public async Task<Wallet?> GetByIdAsync(Guid id)
+        {
+            return await _db.Wallets.FirstOrDefaultAsync(w => w.Id == id);
+        }
+
+        public async Task<IEnumerable<Wallet>> GetAllAsync()
+        {
+            return await _db.Wallets.ToListAsync();
+        }
     }
 }

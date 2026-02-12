@@ -13,19 +13,23 @@ public class WalletService : IWalletService
     }
 
     public async Task<Wallet?> GetByArtistIdAsync(int artistId)
-        => await _walletRepository.GetByArtistIdAsync(artistId);
+    {
+        return await _walletRepository.GetByArtistIdAsync(artistId);
+    }
 
     public async Task<Wallet> CreateOrUpdateAsync(Wallet wallet)
     {
         var existing = await _walletRepository.GetByArtistIdAsync(wallet.ArtistId);
-        if (existing != null)
+
+        if (existing == null)
         {
-            existing.Balance = wallet.Balance; // Atualiza balance
-            await _walletRepository.UpdateAsync(existing);
-            return existing;
+            await _walletRepository.AddAsync(wallet);
+            return wallet;
         }
 
-        await _walletRepository.AddAsync(wallet); // Cria nova Wallet
-        return wallet;
+        existing.Balance = wallet.Balance;
+
+        await _walletRepository.UpdateAsync(existing);
+        return existing;
     }
 }

@@ -27,6 +27,7 @@ namespace Mixart.API.Domain.Entities
         public Booking? Booking { get; set; }
 
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
         [Required]

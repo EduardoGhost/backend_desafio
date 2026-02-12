@@ -4,8 +4,13 @@ namespace Mixart.API.Repositories;
 
 public interface IBookingRepository
 {
-    void Add(Booking booking);
-    IEnumerable<Booking> GetAll();
-    Booking? GetById(Guid id);
-    void Remove(Booking booking);
+    Task AddAsync(Booking booking);
+
+    Task<List<Booking>> GetAllAsync();
+
+    Task<Booking?> GetByIdAsync(Guid id);
+
+    Task RemoveAsync(Booking booking);
+
+    Task UpdateAsync(Booking booking);
 }

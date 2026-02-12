@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Mixart.API.Domain.Entities;
 using Mixart.API.Repositories;
 
@@ -12,21 +13,28 @@ public class EfBookingRepository : IBookingRepository
         _context = context;
     }
 
-    public void Add(Booking booking)
+    public async Task AddAsync(Booking booking)
     {
-        _context.Bookings.Add(booking);
-        _context.SaveChanges();
+        await _context.Bookings.AddAsync(booking);
+        await _context.SaveChangesAsync();
     }
 
-    public IEnumerable<Booking> GetAll()
-        => _context.Bookings.ToList();
+    public async Task<List<Booking>> GetAllAsync()
+        => await _context.Bookings.ToListAsync();
 
-    public Booking? GetById(Guid id)
-        => _context.Bookings.FirstOrDefault(b => b.Id == id);
+    public async Task<Booking?> GetByIdAsync(Guid id)
+        => await _context.Bookings
+            .FirstOrDefaultAsync(b => b.Id == id);
 
-    public void Remove(Booking booking)
+    public async Task RemoveAsync(Booking booking)
     {
         _context.Bookings.Remove(booking);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(Booking booking)
+    {
+        _context.Bookings.Update(booking);
+        await _context.SaveChangesAsync();
     }
 }

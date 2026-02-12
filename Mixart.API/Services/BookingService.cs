@@ -6,14 +6,21 @@ namespace Mixart.API.Services;
 
 public class BookingService : IBookingService
 {
-    private readonly IBookingRepository _repository;
+    private readonly IBookingRepository _bookingRepository;
+    private readonly IWalletRepository _walletRepository;
+    private readonly ITransactionRepository _transactionRepository;
 
-    public BookingService(IBookingRepository repository)
-    {
-        _repository = repository;
-    }
+    public BookingService(
+    IBookingRepository bookingRepository,
+    IWalletRepository walletRepository,
+    ITransactionRepository transactionRepository)
+{
+    _bookingRepository = bookingRepository;
+    _walletRepository = walletRepository;
+    _transactionRepository = transactionRepository;
+}
 
-    public Booking Create(
+    public async Task<Booking> CreateAsync(
         int artistId,
         int contractorId,
         DateOnly date,
@@ -31,46 +38,74 @@ public class BookingService : IBookingService
             Status = BookingStatus.Pending
         };
 
-        _repository.Add(booking);
+        await _bookingRepository.AddAsync(booking);
         return booking;
     }
 
-    public IEnumerable<Booking> GetAll()
-        => _repository.GetAll();
+   public async Task<List<Booking>> GetAll()
+        => await _bookingRepository.GetAllAsync();
 
-    public Booking GetById(Guid id)
-        => _repository.GetById(id)
+    public async Task<Booking> GetById(Guid id)
+        => await _bookingRepository.GetByIdAsync(id)
            ?? throw new InvalidOperationException("Reserva não encontrada.");
 
-    public Booking Accept(Guid id)
+    public async Task<Booking> Accept(Guid id)
+{
+    var booking = await _bookingRepository.GetByIdAsync(id)
+        ?? throw new InvalidOperationException("Reserva não encontrada.");
+
+    if (booking.Status != BookingStatus.Pending)
+        throw new InvalidOperationException("Reserva não está pendente.");
+
+    var signalAmount = booking.TotalValue * 0.30m;
+
+    var wallet = await _walletRepository.GetByArtistIdAsync(booking.ArtistId)
+        ?? throw new InvalidOperationException("Carteira não encontrada.");
+
+    wallet.Balance += signalAmount;
+
+    await _walletRepository.UpdateAsync(wallet);
+
+    var transaction = new Transaction
     {
-        var booking = GetById(id);
+        Id = Guid.NewGuid(),
+        WalletId = wallet.Id,
+        BookingId = booking.Id,
+        Amount = signalAmount,
+        Type = TransactionType.Credit,
+        Description = $"Sinal de 30% da reserva {booking.Id}",
+        CreatedAt = DateTime.UtcNow
+    };
 
-        if (booking.Status != BookingStatus.Pending)
-            throw new InvalidOperationException("Reserva não está pendente.");
+    booking.Status = BookingStatus.Accepted;
 
-        booking.Status = BookingStatus.Accepted;
-        return booking;
-    }
+    await _bookingRepository.UpdateAsync(booking);
+    await _transactionRepository.AddAsync(transaction);
 
-    public Booking Reject(Guid id)
+    return booking;
+}
+
+    public async Task<Booking> Reject(Guid id)
     {
-        var booking = GetById(id);
+        var booking = await GetById(id);
 
         if (booking.Status != BookingStatus.Pending)
             throw new InvalidOperationException("Reserva não está pendente.");
 
         booking.Status = BookingStatus.Rejected;
+
+        await _bookingRepository.UpdateAsync(booking);
+
         return booking;
     }
 
-    public void Delete(Guid id)
+    public async Task Delete(Guid id)
     {
-        var booking = GetById(id);
+        var booking = await GetById(id);
 
         if (booking.Status == BookingStatus.Accepted)
             throw new InvalidOperationException("Reservas aceitas não podem ser removidas.");
 
-        _repository.Remove(booking);
+        await _bookingRepository.RemoveAsync(booking);
     }
 }

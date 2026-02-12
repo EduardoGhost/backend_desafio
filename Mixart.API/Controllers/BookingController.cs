@@ -17,9 +17,9 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create(CreateBookingRequest request)
+    public async Task<IActionResult> Create(CreateBookingRequest request)
     {
-        var booking = _service.Create(
+        var booking = await _service.CreateAsync(
             request.ArtistId,
             request.ContractorId,
             request.Date,
@@ -30,20 +30,20 @@ public class BookingsController : ControllerBase
         return Created("", booking.ToResponse());
     }
 
-
-
     [HttpGet]
-    public IActionResult GetAll()
-        => Ok(_service.GetAll().Select(b => b.ToResponse()));
-        
-
+    public async Task<IActionResult> GetAll()
+    {
+        var bookings = await _service.GetAll();
+        return Ok(bookings.Select(b => b.ToResponse()));
+    }
 
     [HttpGet("{id}")]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         try
         {
-            return Ok(_service.GetById(id).ToResponse());
+            var booking = await _service.GetById(id);
+            return Ok(booking.ToResponse());
         }
         catch (InvalidOperationException ex)
         {
@@ -51,13 +51,13 @@ public class BookingsController : ControllerBase
         }
     }
 
-
-    [HttpPut("{id}/accept")]
-    public IActionResult Accept(Guid id)
+    [HttpPost("{id}/accept")]
+    public async Task<IActionResult> Accept(Guid id)
     {
         try
         {
-            return Ok(_service.Accept(id).ToResponse());
+            var booking = await _service.Accept(id);
+            return Ok(booking.ToResponse());
         }
         catch (InvalidOperationException ex)
         {
@@ -66,11 +66,12 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPut("{id}/reject")]
-    public IActionResult Reject(Guid id)
+    public async Task<IActionResult> Reject(Guid id)
     {
         try
         {
-            return Ok(_service.Reject(id).ToResponse());
+            var booking = await _service.Reject(id);
+            return Ok(booking.ToResponse());
         }
         catch (InvalidOperationException ex)
         {
@@ -78,13 +79,12 @@ public class BookingsController : ControllerBase
         }
     }
 
-
     [HttpDelete("{id}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         try
         {
-            _service.Delete(id);
+            await _service.Delete(id);
             return NoContent();
         }
         catch (InvalidOperationException ex)
@@ -92,5 +92,4 @@ public class BookingsController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-
 }

@@ -4,17 +4,37 @@ namespace Mixart.API.Repositories;
 
 public class InMemoryBookingRepository : IBookingRepository
 {
-    private static readonly List<Booking> _bookings = [];
+    private static readonly List<Booking> _bookings = new();
 
-    public void Add(Booking booking)
-        => _bookings.Add(booking);
+    public Task AddAsync(Booking booking)
+    {
+        _bookings.Add(booking);
+        return Task.CompletedTask;
+    }
 
-    public IEnumerable<Booking> GetAll()
-        => _bookings;
+    public Task<List<Booking>> GetAllAsync()
+{
+    return Task.FromResult(_bookings.ToList());
+}
 
-    public Booking? GetById(Guid id)
-        => _bookings.FirstOrDefault(b => b.Id == id);
+    public Task<Booking?> GetByIdAsync(Guid id)
+    {
+        var booking = _bookings.FirstOrDefault(b => b.Id == id);
+        return Task.FromResult(booking);
+    }
 
-    public void Remove(Booking booking)
-        => _bookings.Remove(booking);
+    public Task RemoveAsync(Booking booking)
+    {
+        _bookings.Remove(booking);
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAsync(Booking booking)
+    {
+        var index = _bookings.FindIndex(b => b.Id == booking.Id);
+        if (index >= 0)
+            _bookings[index] = booking;
+
+        return Task.CompletedTask;
+    }
 }

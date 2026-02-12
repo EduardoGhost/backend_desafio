@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Mixart.API.Domain.Entities;
-using Mixart.API.Infrastructure.Persistence;
+using Mixart.API.Services;
 using Mixart.API.Mappers;
 using Mixart.API.Responses;
+using Mixart.API.Domain.Entities;
+
 
 
 namespace Mixart.API.Controllers;
@@ -12,33 +12,39 @@ namespace Mixart.API.Controllers;
 [Route("api/[controller]")]
 public class WalletsController : ControllerBase
 {
-    private readonly MixartDbContext _db;
+    private readonly IWalletService _service;
 
-    public WalletsController(MixartDbContext db) => _db = db;
+    public WalletsController(IWalletService service)
+    {
+        _service = service;
+    }
 
-    // GET: api/wallets/{artistId}
     [HttpGet("{artistId}")]
     public async Task<ActionResult<WalletResponse>> GetWallet(int artistId)
     {
-        var wallet = await _db.Wallets.FirstOrDefaultAsync(w => w.ArtistId == artistId);
-        if (wallet == null) return NotFound();
-        return wallet.ToResponse();
+        var wallet = await _service.GetByArtistIdAsync(artistId);
+
+        if (wallet == null)
+            return NotFound();
+
+        return Ok(wallet.ToResponse());
     }
 
-    // POST: api/wallets
     [HttpPost]
     public async Task<ActionResult<WalletResponse>> CreateWallet([FromBody] WalletRequest request)
     {
         var wallet = new Wallet
         {
-            Id = Guid.NewGuid(),
             ArtistId = request.ArtistId,
             Balance = request.Balance
         };
 
-        _db.Wallets.Add(wallet);
-        await _db.SaveChangesAsync();
+        var result = await _service.CreateOrUpdateAsync(wallet);
 
-        return CreatedAtAction(nameof(GetWallet), new { artistId = wallet.ArtistId }, wallet.ToResponse());
+        return CreatedAtAction(
+            nameof(GetWallet),
+            new { artistId = result.ArtistId },
+            result.ToResponse()
+        );
     }
 }
